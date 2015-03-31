@@ -94,17 +94,31 @@ void APAddressBookExternalChangeCallback(ABAddressBookRef addressBookRef, CFDict
 	        NSError *error = nil;
             if (granted)
             {
+                NSMutableSet *included = [[NSMutableSet alloc] init];
                 CFArrayRef peopleArrayRef = ABAddressBookCopyArrayOfAllPeople(self.addressBook);
                 NSUInteger contactCount = (NSUInteger)CFArrayGetCount(peopleArrayRef);
                 NSMutableArray *contacts = [[NSMutableArray alloc] init];
                 for (NSUInteger i = 0; i < contactCount; i++)
                 {
                     ABRecordRef recordRef = CFArrayGetValueAtIndex(peopleArrayRef, i);
-                    APContact *contact = [[APContact alloc] initWithRecordRef:recordRef
-                                                                    fieldMask:fieldMask];
+                    APContact *contact = [[APContact alloc] initWithRecordRef:recordRef fieldMask:fieldMask];
+                    
                     if (!filterBlock || filterBlock(contact))
                     {
+                        if ([included containsObject:contact.recordID]) continue;
+                        
                         [contacts addObject:contact];
+                        
+                        CFArrayRef linkedPeopleArrayRef = ABPersonCopyArrayOfAllLinkedPeople(recordRef);
+                        NSUInteger linkedPeopleCount = CFArrayGetCount(linkedPeopleArrayRef);
+                        for (NSUInteger j = 0; j < linkedPeopleCount; j++)
+                        {
+                            ABRecordRef linkedRecordRef = CFArrayGetValueAtIndex(linkedPeopleArrayRef, j);
+                            NSNumber *linkedRecordID = [NSNumber numberWithInteger:ABRecordGetRecordID(linkedRecordRef)];
+                            [included addObject:linkedRecordID];
+                        }
+                        
+                        CFRelease(linkedPeopleArrayRef);
                     }
                 }
                 [contacts sortUsingDescriptors:descriptors];
