@@ -72,10 +72,9 @@
             }
             _addresses = addresses.copy;
         }
-        if (fieldMask & APContactFieldRecordID)
-        {
-            _recordID = [NSNumber numberWithInteger:ABRecordGetRecordID(recordRef)];
-        }
+        
+         _recordID = [NSNumber numberWithInteger:ABRecordGetRecordID(recordRef)];
+        
         if (fieldMask & APContactFieldCreationDate)
         {
             _creationDate = [self dateProperty:kABPersonCreationDateProperty fromRecord:recordRef];
